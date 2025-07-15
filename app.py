@@ -1,12 +1,13 @@
 # app.py
 import os, io, json, datetime, base64
-from flask import Flask, request, render_template_string, redirect, url_for
+from flask import Flask, request, render_template_string, redirect, url_for, session
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import padding
 
 app = Flask(__name__)
+app.secret_key = os.environ.get("FLASK_SECRET_KEY", "clave_secreta_snapq")
 ACTIVACIONES_FILE = "activaciones.json"
-ADMIN_TOKEN = os.environ.get("ADMIN_TOKEN", "SnpQ-Adm1n-2025!@#")  # Token más complejo
+ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "Cimi820307_")
 
 # --- Cargar clave privada desde variable de entorno segura ---
 def cargar_clave_privada():
@@ -93,12 +94,11 @@ def activar():
         </script>
     """)
 
-# --- Página de administración ---
+# --- Página de inicio de sesión admin ---
 @app.route("/admin", methods=["GET", "POST"])
 def admin():
-    token = request.args.get("token")
-    if token != ADMIN_TOKEN:
-        return "Acceso no autorizado", 403
+    if "autenticado" not in session:
+        return redirect(url_for("login_admin"))
 
     activaciones = cargar_activaciones()
 
@@ -107,7 +107,7 @@ def admin():
         if borrar and borrar in activaciones:
             del activaciones[borrar]
             guardar_activaciones(activaciones)
-            return redirect(url_for("admin", token=token))
+            return redirect(url_for("admin"))
 
     tabla = "<ul>"
     for k, v in activaciones.items():
@@ -119,9 +119,32 @@ def admin():
     return f"""
         <h2>📋 Activaciones registradas</h2>
         {tabla}
-        <hr>
-        <small>Protegido por token. URL: ?token=SnpQ-Adm1n-2025!@#</small>
+        <form method='post' action='/logout'><button>Salir</button></form>
     """
+
+# --- Login admin ---
+@app.route("/admin/login", methods=["GET", "POST"])
+def login_admin():
+    if request.method == "POST":
+        clave = request.form.get("clave")
+        if clave == ADMIN_PASSWORD:
+            session["autenticado"] = True
+            return redirect(url_for("admin"))
+        return "<h3>❌ Clave incorrecta</h3><a href='/admin/login'>Volver</a>"
+
+    return """
+        <h2>🔒 Acceso Admin</h2>
+        <form method='post'>
+            <input type='password' name='clave' placeholder='Contraseña de administrador'>
+            <button type='submit'>Entrar</button>
+        </form>
+    """
+
+# --- Logout ---
+@app.route("/logout", methods=["POST"])
+def logout():
+    session.pop("autenticado", None)
+    return redirect(url_for("login_admin"))
 
 # --- Página de inicio (opcional) ---
 @app.route("/")
@@ -132,4 +155,3 @@ def index():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
     app.run(host="0.0.0.0", port=port)
-
