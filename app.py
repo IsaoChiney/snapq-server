@@ -6,7 +6,7 @@ from cryptography.hazmat.primitives.asymmetric import padding
 
 app = Flask(__name__)
 ACTIVACIONES_FILE = "activaciones.json"
-ADMIN_TOKEN = os.environ.get("ADMIN_TOKEN", "Cimi820307_")  # Cambia este valor para más seguridad
+ADMIN_TOKEN = os.environ.get("ADMIN_TOKEN", "SnpQ-Adm1n-2025!@#")  # Token más complejo
 
 # --- Cargar clave privada desde variable de entorno segura ---
 def cargar_clave_privada():
@@ -73,7 +73,7 @@ def activar():
         <p><b>Plan:</b> {plan_default}</p>
         <textarea id='licencia' rows='6' cols='80'>{licencia}</textarea>
         <br><br>
-        <button onclick="descargarPDF()">📄 Descargar como PDF</button>
+        <button onclick=\"descargarPDF()\">📄 Descargar como PDF</button>
         <br><br>
         <small>Licencia válida solo para esta máquina y este paquete</small>
 
@@ -120,7 +120,7 @@ def admin():
         <h2>📋 Activaciones registradas</h2>
         {tabla}
         <hr>
-        <small>Protegido por token. URL: ?token=1234</small>
+        <small>Protegido por token. URL: ?token=SnpQ-Adm1n-2025!@#</small>
     """
 
 # --- Página de inicio (opcional) ---
@@ -132,3 +132,4 @@ def index():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
     app.run(host="0.0.0.0", port=port)
+
