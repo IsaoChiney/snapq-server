@@ -1,11 +1,12 @@
 # app.py
 import os, io, json, datetime, base64
-from flask import Flask, request, render_template_string
+from flask import Flask, request, render_template_string, redirect, url_for
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import padding
 
 app = Flask(__name__)
 ACTIVACIONES_FILE = "activaciones.json"
+ADMIN_TOKEN = os.environ.get("ADMIN_TOKEN", "Cimi820307_")  # Cambia este valor para más seguridad
 
 # --- Cargar clave privada desde variable de entorno segura ---
 def cargar_clave_privada():
@@ -26,6 +27,11 @@ def registrar_activacion(package_id, machine_id):
         "machine_id": machine_id,
         "fecha": str(datetime.date.today())
     }
+    with open(ACTIVACIONES_FILE, "w") as f:
+        json.dump(data, f, indent=2)
+
+# --- Guardar lista completa ---
+def guardar_activaciones(data):
     with open(ACTIVACIONES_FILE, "w") as f:
         json.dump(data, f, indent=2)
 
@@ -86,6 +92,36 @@ def activar():
             }
         </script>
     """)
+
+# --- Página de administración ---
+@app.route("/admin", methods=["GET", "POST"])
+def admin():
+    token = request.args.get("token")
+    if token != ADMIN_TOKEN:
+        return "Acceso no autorizado", 403
+
+    activaciones = cargar_activaciones()
+
+    if request.method == "POST":
+        borrar = request.form.get("borrar")
+        if borrar and borrar in activaciones:
+            del activaciones[borrar]
+            guardar_activaciones(activaciones)
+            return redirect(url_for("admin", token=token))
+
+    tabla = "<ul>"
+    for k, v in activaciones.items():
+        tabla += f"<li><b>{k}</b> → {v['machine_id']} ({v['fecha']}) "
+        tabla += f"<form method='post' style='display:inline'>"
+        tabla += f"<input type='hidden' name='borrar' value='{k}'><button>❌</button></form></li>"
+    tabla += "</ul>"
+
+    return f"""
+        <h2>📋 Activaciones registradas</h2>
+        {tabla}
+        <hr>
+        <small>Protegido por token. URL: ?token=1234</small>
+    """
 
 # --- Página de inicio (opcional) ---
 @app.route("/")
