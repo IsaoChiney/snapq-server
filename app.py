@@ -1,3 +1,4 @@
+# app.py
 import os, io, json, datetime, base64
 from flask import Flask, request, render_template_string
 from cryptography.hazmat.primitives import hashes, serialization
@@ -64,9 +65,26 @@ def activar():
         <h2>✅ Licencia generada automáticamente</h2>
         <p><b>Fecha expiración:</b> {fecha_default}</p>
         <p><b>Plan:</b> {plan_default}</p>
-        <textarea rows="6" cols="80">{licencia}</textarea>
+        <textarea id='licencia' rows='6' cols='80'>{licencia}</textarea>
+        <br><br>
+        <button onclick="descargarPDF()">📄 Descargar como PDF</button>
         <br><br>
         <small>Licencia válida solo para esta máquina y este paquete</small>
+
+        <script>
+            function descargarPDF() {
+                const licencia = document.getElementById('licencia').value;
+                const blob = new Blob([licencia], { type: 'application/pdf' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'licencia_snapq.pdf';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }
+        </script>
     """)
 
 # --- Página de inicio (opcional) ---
