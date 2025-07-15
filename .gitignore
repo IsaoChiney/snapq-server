@@ -1,0 +1,5 @@
+# Ignorar archivos sensibles y temporales
+__pycache__/
+*.pem
+activaciones.json
+.env
